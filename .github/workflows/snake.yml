@@ -1,0 +1,40 @@
+# Draws the contribution-graph snake shown in README.md.
+# Output goes to the `output` branch, which the README reads through raw.githubusercontent.com.
+name: snake
+
+on:
+  schedule:
+    - cron: "0 0 * * *" # daily, 00:00 UTC (05:30 IST)
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: snake
+  cancel-in-progress: true
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Generate the snake SVGs
+        uses: Platane/snk@v3
+        with:
+          github_user_name: ${{ github.repository_owner }}
+          # Ember snake (#ff4d1c) over a warm ember scale, one file per GitHub theme.
+          outputs: |
+            dist/github-snake.svg?color_snake=#ff4d1c&color_dots=#ebedf0,#ffd9cc,#ffab8f,#ff7a52,#ff4d1c
+            dist/github-snake-dark.svg?palette=github-dark&color_snake=#ff4d1c&color_dots=#161b22,#4a1d10,#8c2e12,#d13d14,#ff4d1c
+
+      - name: Push the SVGs to the output branch
+        uses: crazy-max/ghaction-github-pages@v4
+        with:
+          target_branch: output
+          build_dir: dist
+          commit_message: "Update contribution snake"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
